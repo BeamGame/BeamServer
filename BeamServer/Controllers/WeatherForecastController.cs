@@ -20,6 +20,19 @@ namespace BeamServer.Controllers
             _logger = logger;
         }
 
+
+        [HttpGet(Name = "GetOne")]
+        [AllowAnonymous]
+        public WeatherForecast GetOne()
+        {
+            return new WeatherForecast
+            {
+                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(0)),
+                TemperatureC = Random.Shared.Next(-20, 55),
+                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+            };
+        }
+
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {
