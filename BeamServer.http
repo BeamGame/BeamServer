@@ -1,6 +1,34 @@
 @BeamServer_HostAddress = http://localhost:5101
 
+### Register a new user
+POST {{BeamServer_HostAddress}}/account/register
+Content-Type: application/json
+
+{
+  "username": "andrew@example.com",
+  "password": "SuperSecret1!",
+  "email": "andrew@example.com"
+}
+
+
+### Login and retrieve tokens
+POST {{BeamServer_HostAddress}}/account/login
+Content-Type: application/json
+
+{
+  "email": "andrew@example.com",
+  "password": "SuperSecret1!"
+}
+
+### Get weather
 GET {{BeamServer_HostAddress}}/weatherforecast/
 Accept: application/json
+Authorization: Bearer CfDJ8Lu1F6ltHIFPrV1laegjjhhl-SWdISAmSQPYZLmrGmdyMomQD0EK0Df8TjE39AMqjWyg92gpF5BsXBVVOKWsHujcKwyr7nbvzCFfdK9mKfhv4Ld_LKTuOycSpDjznoiofedzZCWuIEhTQLgMmiqJ0IPePckDJkGloB0qVoudnzPqZAJLsUPM75q5yruF9D0YAN-GjsQXTWkv_gi5KwhxHPw0xWZoAyBDPS8u6r0bukYT1G1Vq5zhd2VgK_ZsR7smEVV4c7fpY2XOuTCSDUCoaIHmFg6NZ9t5Pg09SV9dD2TMIrX6Br12UTkTf7eT4apUNTTbwILNpRxBxsBZeLnredFQIzXulPZkgevnOure925X-QA6t4Et9s_o0Oqf1JVGfE5EDTgg6Ym3wSSmBLxn4OIHCxPdQ3cx_taXFAfCiIsuPVKOID_pKQKZc5R8DktR5laNOz0Gk9VZ1YZO_sgcFCnlJJ-g-xAaZYu26gUmHJtthemeLDdfoDX-Q9LLFsy8lJoYYtl4V2RSiDYQOO9C2zGzXDai7sILxhpZqxAaRC0-0c4jQB2q7V7eAOY28NBbJ8stAgcjrsjedzUdsNF9fYmGOGDv8B37Z4qfKTNZzAR7mALdBEhMfmJfbgBXpTVQ466rwniVQkcvkcNDNYJgxWZFSLlDN8j-O2-yR9FRMtuOF98uDChnVcHU67MlolcAoLdaeBUuwVrix9mgwyKuh-Y
 
-###
+### Fetch a new access token
+POST {{BeamServer_HostAddress}}/account/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh_token}}"
+}
