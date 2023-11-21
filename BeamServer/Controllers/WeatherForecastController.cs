@@ -18,22 +18,9 @@ namespace BeamServer.Controllers
         public WeatherForecastController(ILogger<WeatherForecastController> logger)
         {
             _logger = logger;
-        }
+        }  
 
-
-        [HttpGet(Name = "GetOne")]
-        [AllowAnonymous]
-        public WeatherForecast GetOne()
-        {
-            return new WeatherForecast
-            {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(0)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            };
-        }
-
-        [HttpGet(Name = "GetWeatherForecast")]
+        [HttpGet()]
         public IEnumerable<WeatherForecast> Get()
         {
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -43,6 +30,18 @@ namespace BeamServer.Controllers
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
+        }
+
+        [HttpGet("GetOne")]
+        [AllowAnonymous]
+        public WeatherForecast GetOne()
+        {
+            return new WeatherForecast
+            {
+                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(0)),
+                TemperatureC = Random.Shared.Next(-20, 55),
+                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+            };
         }
     }
 }
