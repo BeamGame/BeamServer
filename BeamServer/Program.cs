@@ -6,7 +6,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add EF Core
 builder.Services.AddDbContext<BeamDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), opt =>
+    {
+        opt.MigrationsAssembly("BeamServer");
+    }));
 
 // Add services to the container.
 builder.Services
