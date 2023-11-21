@@ -39,7 +39,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGroup("/account").MapIdentityApi<BeamUser>();
+app.MapGroup("api/account").MapIdentityApi<BeamUser>();
 
 app.UseFileServer();
 

@@ -40,12 +40,12 @@ namespace BeamTest
                 Password = "SuperSecret1!"
             };
 
-            var loginResponse = await client.PostAsJsonAsync<LoginRequest>("/account/login", log);
+            var loginResponse = await client.PostAsJsonAsync<LoginRequest>("api/account/login", log);
             var token = await loginResponse.Content.ReadFromJsonAsync<Bearer>();
             output.WriteLine("token " + token.AccessToken.ToString());
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-            var weatherResponse = await client.GetAsync("/weatherforecast");
+            var weatherResponse = await client.GetAsync("api/weatherforecast");
             var weather = await weatherResponse.Content.ReadFromJsonAsync<List<WeatherForecast>>();
             var weatherJson = await weatherResponse.Content.ReadAsStringAsync();
             output.WriteLine("weatherResponse " + weatherJson);

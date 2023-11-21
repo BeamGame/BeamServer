@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BeamServer.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [Authorize]
     public class WeatherForecastController : ControllerBase
     {
