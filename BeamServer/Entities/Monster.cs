@@ -22,5 +22,6 @@ namespace BeamServer.Entities
         public int SpecialAttackEV { get; set; }
         public int SpecialDefenseEV { get; set; }
         public int SpeedEV { get; set; }
+        public BeamonNature Nature { get; set; }
     }
 }
