@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.VisualStudio.TestPlatform.Utilities;
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Numerics;
 using System.Security.Cryptography.Xml;
 using Xunit.Abstractions;
 
@@ -25,6 +27,12 @@ namespace BeamTest
         public class Bearer
         {
             public string AccessToken { get; set; }
+        }
+
+        [Fact]
+        public void Test()
+        {
+            var r = BigInteger.Parse("728faf34b64cd55c8d1d500268026ffb", NumberStyles.AllowHexSpecifier);
         }
 
 
