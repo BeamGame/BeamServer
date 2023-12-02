@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BeamServer.Entities
+namespace BeamServer.Models
 {
 
     public enum BeamonNature

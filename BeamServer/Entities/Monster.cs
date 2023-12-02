@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using BeamServer.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.ComponentModel.DataAnnotations;
 
@@ -8,6 +9,7 @@ namespace BeamServer.Entities
     {
         [Key]
         public int MonsterId { get; set; }
+        public int BeamonId { get; set; }
         public int Level { get; set; }
         public int Xp { get; set; }
         public int HpIV { get; set; }
@@ -23,5 +25,7 @@ namespace BeamServer.Entities
         public int SpecialDefenseEV { get; set; }
         public int SpeedEV { get; set; }
         public BeamonNature Nature { get; set; }
+
+        public Beamon Beamon { get;}
     }
 }

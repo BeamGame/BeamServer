@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using BeamServer.Models;
 
 namespace BeamServer.Entities
 {
@@ -17,5 +18,23 @@ namespace BeamServer.Entities
         public int SpecialDefense { get; set; }
         public int Speed { get; set; }
         public BeamonType BeamonType { get; set; }
+
+        public Beamon()
+        {
+
+        }
+
+        public Beamon(int beamonId, string name, int hp, int attack, int defense, int specialAttack, int specialDefense, int speed, BeamonType beamonType)
+        {
+            BeamonId = beamonId;
+            Name = name;
+            Hp = hp;
+            Attack = attack;
+            Defense = defense;
+            SpecialAttack = specialAttack;
+            SpecialDefense = specialDefense;
+            Speed = speed;
+            BeamonType = beamonType;
+        }
     }
 }

@@ -5,6 +5,7 @@ namespace BeamServer.Entities
 {
     public class BeamUser : IdentityUser
     {
+        public bool RequestStarter { get; set; }
         public string ProfileId { get { return Constants.ServerId + UserName + Id; } }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BeamServer.Entities
+namespace BeamServer.Models
 {
     [Flags]
     public enum BeamonType
