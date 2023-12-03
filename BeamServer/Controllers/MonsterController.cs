@@ -219,13 +219,13 @@ namespace BeamServer.Controllers
                     var listIds = result.Data.Where(x => x.AssetAddress.Equals(addresBeamon, StringComparison.OrdinalIgnoreCase)).Select(x => int.Parse(x.AssetId));
                     if (listIds.Any())
                     {
-                        listMonsters = _dbContext.Monsters.Where(x => listIds.Contains(x.MonsterId)).ToList();
+                        listMonsters = _dbContext.Monsters.Include(x=>x.Beamon).Where(x => listIds.Contains(x.MonsterId)).ToList();
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                _logger.LogError(ex, ex.Message);
             }
 
 
@@ -241,6 +241,57 @@ namespace BeamServer.Controllers
                await _mintService.Transfer(monsterDto.TokenId, player.Account);*/
             return await GetMonsters();
 
+        }
+
+        [HttpGet("{id}")]
+        [AllowAnonymous]
+        public async Task<NftDto> Get(int id)
+        {
+            var uri = BaseUrl(Request);
+            var monster = await _dbContext.Monsters.Include(x => x.Beamon).Where(x => x.MonsterId == id).FirstOrDefaultAsync();
+            if (monster != null)
+            {
+                return new NftDto()
+                {
+                    Name = monster.Beamon.Name,
+                    Description = "Beamon",
+                    Id = monster.Beamon.BeamonId,
+                    Image = $"{uri}api/nft/image/{monster.Beamon.BeamonId}"
+                };
+            }
+            return new NftDto()
+            {
+                Name = "Egg",
+                Description = "Unrevelated monster",
+                Id = 0,
+                Image = $"{uri}api/nft/image/0"
+            };
+        }
+
+
+        [HttpGet("Image/{id}")]
+        [AllowAnonymous]
+        public IActionResult GetImage(int id)
+        {
+            if (id < 1 || id > 6)
+            {
+                var imageNF = System.IO.File.OpenRead("wwwroot/images/monsters/0_0.png");
+                return File(imageNF, "image/jpeg");
+            }
+            var image = System.IO.File.OpenRead($"wwwroot/images/monsters/{id}_0.png");
+            return File(image, "image/jpeg");
+        }
+
+        public static string? BaseUrl(HttpRequest req)
+        {
+            if (req == null) return null;
+            var uriBuilder = new UriBuilder(req.Scheme, req.Host.Host, req.Host.Port ?? -1);
+            if (uriBuilder.Uri.IsDefaultPort)
+            {
+                uriBuilder.Port = -1;
+            }
+
+            return uriBuilder.Uri.AbsoluteUri;
         }
 
     }
