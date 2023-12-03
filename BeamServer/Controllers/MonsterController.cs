@@ -13,6 +13,7 @@ using System.Numerics;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Text.Json;
 using System.Globalization;
+using Nethereum.Util;
 
 namespace BeamServer.Controllers
 {
@@ -150,35 +151,68 @@ namespace BeamServer.Controllers
         public async Task<List<Monster>> MintMonster([FromBody] AddMonsterDto monsterDto)
         {
 
-            /*    var claimsIdentity = User.Identity as ClaimsIdentity;
-                var claimAccount = claimsIdentity.FindFirst(JwtRegisteredClaimNames.Name);
-
-                Client client = new Client(new Config()
+            try
+            {
+                var profile = GetProfile(User.Identity.Name);
+                var profileBeam = await _profilesApi.CreateProfileAsync(new CreateProfileRequestInput(profile));
+                string wallet = string.Empty;
+                if (profileBeam.IsCreated)
                 {
-                    Environment = EnvironmentSelector.Sandbox // Or EnvironmentSelector.Mainnet
-                });
-                var result = await client.MintsApi.ListMintsAsync(1000, orderBy: "token_id", direction: "desc", tokenAddress: _config["ContractAddress"]);
-                var last = result.Result.OrderBy(x => int.Parse(x.Token.Data.TokenId)).LastOrDefault();
-                // get next tokenId
-                int tokenId = last != null ? int.Parse(last.Token.Data.TokenId) + 1 : 1;
-
-                var getMonster = _dbContext.Monsters.Where(a => EF.Functions.ILike(a.Name, $"{monsterDto.Name.ToLower()}")).FirstOrDefault();
-                //var getMoves = _dbContext.Moves.Where(m => monsterDto.Moves.Contains(m.Name)).ToList();
-                await _mintService.Mint(tokenId, claimAccount.Value, getMonster);
-
-
-
-                var token = new Token()
+                    var prof = JsonSerializer.Deserialize<Profile>(profileBeam.RawContent);
+                    wallet = prof.wallets[0].address;
+                }
+                else
                 {
-                    Level = monsterDto.Level,
-                    MonsterId = getMonster.MonsterId,
-                    Exp = 0,
-                    TokenId = tokenId
-                };
+                    var prof = await _profilesApi.GetProfileAsync(profile);
+                    if (prof.IsOk)
+                    {
+                        var prof2 = JsonSerializer.Deserialize<Profile>(prof.RawContent);
+                        wallet = prof2.wallets[0].address;
+                    }
+                    else
+                    {
+                        throw new Exception("Profile not found");
+                    }
+                }
+                var minter = GetMinter();
 
-                _dbContext.Tokens.Add(token);
 
-                _dbContext.SaveChanges();*/
+                // we generate id and call mint to don't wait the mint is finish to get the id
+                var user = await _dbContext.Users.Where(x => x.UserName == User.Identity.Name).FirstAsync();
+                user.RequestStarter = true;
+
+                var beamon = _dbContext.Beamons.Where(x => x.Name.Equals(monsterDto.Name, StringComparison.OrdinalIgnoreCase)).First();
+                var newMonster = new Monster() { BeamonId = beamon.BeamonId, Exp = 0, Level = monsterDto.Level };
+                _dbContext.Monsters.Add(newMonster);
+
+                await _dbContext.SaveChangesAsync();
+
+                var id = newMonster.MonsterId;
+
+                var addresBeamon = _config["BeamonContract"];
+                var addresCoin = _config["BeamCoinContract"];
+                BigInteger ten = UnitConversion.Convert.ToWei(new BigInteger(10), UnitConversion.EthUnit.Ether);
+
+                // get 1 pokemon and 10 token on each catch
+                var args = new Option<List<object>>(new List<object> { wallet, id });
+                var args2 = new Option<List<object>>(new List<object> { wallet, ten });
+                List<CreateTransactionRequestInputInteractionsInner> interactions = new List<CreateTransactionRequestInputInteractionsInner>();
+                CreateTransactionRequestInputInteractionsInner interaction = new CreateTransactionRequestInputInteractionsInner(addresBeamon, "safeMint", args);
+                CreateTransactionRequestInputInteractionsInner interaction2 = new CreateTransactionRequestInputInteractionsInner(addresCoin, "safeMint", args2);
+
+                CreateTransactionRequestInput request = new CreateTransactionRequestInput(new List<CreateTransactionRequestInputInteractionsInner> { interaction, interaction2 });
+
+                // dont call it async to finish fast
+                _transactionsApi.CreateProfileTransactionAsync(request, minter);
+
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+
+
 
             return await GetMonsters();
 
@@ -188,15 +222,12 @@ namespace BeamServer.Controllers
         public async Task<bool> UpdateMonster([FromBody] UpdateMonsterDto monsterDto)
         {
 
-            /*    var claimsIdentity = User.Identity as ClaimsIdentity;
-                var claimAccount = claimsIdentity.FindFirst(JwtRegisteredClaimNames.Name);
+            var getMonster = _dbContext.Monsters.Where(a => a.MonsterId == monsterDto.TokenId).FirstOrDefault();
 
-                var getMonster = _dbContext.Tokens.Where(a => a.TokenId == monsterDto.TokenId).FirstOrDefault();
+            getMonster.Level = monsterDto.Level;
+            getMonster.Exp = monsterDto.Exp;
 
-                getMonster.Level = monsterDto.Level;
-                getMonster.Exp = monsterDto.Exp;
-
-                _dbContext.SaveChanges();*/
+            _dbContext.SaveChanges();
 
             return true;
         }
