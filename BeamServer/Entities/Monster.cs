@@ -9,6 +9,7 @@ namespace BeamServer.Entities
     public class Monster
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int MonsterId { get; set; }
         public int Level { get; set; }
         public int Exp { get; set; }
