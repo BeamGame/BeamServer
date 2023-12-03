@@ -110,35 +110,34 @@ namespace BeamServer.Controllers
                 }
                 var minter = GetMinter();
 
+
+                // we generate id and call mint to don't wait the mint is finish to get the id
+                var user = await _dbContext.Users.Where(x => x.UserName == User.Identity.Name).FirstAsync();
+                user.RequestStarter = true;
+
+                var newMonster = new Monster() { BeamonId = 1, Exp = 0, Level = 1 };
+                _dbContext.Monsters.Add(newMonster);
+
+                await _dbContext.SaveChangesAsync();
+
+                var id = newMonster.MonsterId;
+
                 var addresBeamon = _config["BeamonContract"];
-                var args = new Option<List<object>>(new List<object> { wallet });
+                var args = new Option<List<object>>(new List<object> { wallet, id });
 
                 List<CreateTransactionRequestInputInteractionsInner> interactions = new List<CreateTransactionRequestInputInteractionsInner>();
                 CreateTransactionRequestInputInteractionsInner interaction = new CreateTransactionRequestInputInteractionsInner(addresBeamon, "safeMint", args);
 
                 CreateTransactionRequestInput request = new CreateTransactionRequestInput(new List<CreateTransactionRequestInputInteractionsInner> { interaction });
-                var res = await _transactionsApi.CreateProfileTransactionAsync(request, minter);
 
-                if (res.TryCreated(out CreateTransactionResponse response))
-                {
-                    var mint = response.Response.Logs.Where(x => x.Topics.Contains(Constants.ERC721Mint)).FirstOrDefault();
-                    if (mint != null)
-                    {
-                        var id = mint.Topics.Last();
-                        BigInteger tokenId = BigInteger.Parse(id.Replace("0x",""), NumberStyles.AllowHexSpecifier);
-                        var user = await _dbContext.Users.Where(x => x.UserName == User.Identity.Name).FirstAsync();
-                        user.RequestStarter = true;
+                // dont call it async to finish fast
+                _transactionsApi.CreateProfileTransactionAsync(request, minter);
 
-                        var newMonster = new Monster() { BeamonId = 1, Exp = 0, Level = 1, MonsterId = (int)tokenId };
-                        _dbContext.Monsters.Add(newMonster);
 
-                        await _dbContext.SaveChangesAsync();
-                    }
-                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex,ex.Message);
+                _logger.LogError(ex, ex.Message);
             }
 
 
@@ -219,7 +218,7 @@ namespace BeamServer.Controllers
                     var listIds = result.Data.Where(x => x.AssetAddress.Equals(addresBeamon, StringComparison.OrdinalIgnoreCase)).Select(x => int.Parse(x.AssetId));
                     if (listIds.Any())
                     {
-                        listMonsters = _dbContext.Monsters.Include(x=>x.Beamon).Where(x => listIds.Contains(x.MonsterId)).ToList();
+                        listMonsters = _dbContext.Monsters.Include(x => x.Beamon).Where(x => listIds.Contains(x.MonsterId)).ToList();
                     }
                 }
             }
