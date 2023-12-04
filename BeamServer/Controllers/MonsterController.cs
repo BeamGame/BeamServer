@@ -136,9 +136,12 @@ namespace BeamServer.Controllers
                 CreateTransactionRequestInput request = new CreateTransactionRequestInput(new List<CreateTransactionRequestInputInteractionsInner> { interaction });
 
                 // dont call it async to finish fast
-                await _transactionsApi.CreateProfileTransactionAsync(request, minter);
+                var res = await _transactionsApi.CreateProfileTransactionAsync(request, minter);
 
-
+                if (!res.IsCreated)
+                {
+                    _logger.LogError(res.RawContent);
+                }
             }
             catch (Exception ex)
             {
@@ -210,7 +213,10 @@ namespace BeamServer.Controllers
                 // dont call it async to finish fast
                 var res = await _transactionsApi.CreateProfileTransactionAsync(request, minter);
 
-
+                if (!res.IsCreated)
+                {
+                    _logger.LogError(res.RawContent);
+                }
             }
             catch (Exception ex)
             {
