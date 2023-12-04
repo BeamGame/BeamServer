@@ -136,7 +136,7 @@ namespace BeamServer.Controllers
                 CreateTransactionRequestInput request = new CreateTransactionRequestInput(new List<CreateTransactionRequestInputInteractionsInner> { interaction });
 
                 // dont call it async to finish fast
-                _transactionsApi.CreateProfileTransactionAsync(request, minter);
+                await _transactionsApi.CreateProfileTransactionAsync(request, minter);
 
 
             }
