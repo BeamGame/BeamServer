@@ -18,6 +18,7 @@ using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Nethereum.RPC.Eth.DTOs;
 using BeamServer.Models.TokenOwner;
+using Microsoft.Extensions.Logging;
 
 namespace BeamServer.Controllers
 {
@@ -135,12 +136,18 @@ namespace BeamServer.Controllers
 
                 CreateTransactionRequestInput request = new CreateTransactionRequestInput(new List<CreateTransactionRequestInputInteractionsInner> { interaction });
 
+                _logger.LogInformation($"mint starter {minter} contract {addresBeamon} safeMint args {wallet} {id}");
+
                 // dont call it async to finish fast
                 var res = await _transactionsApi.CreateProfileTransactionAsync(request, minter);
 
                 if (!res.IsCreated)
                 {
                     _logger.LogError(res.RawContent);
+                }
+                else
+                {
+                    _logger.LogInformation($"minted {id}");
                 }
             }
             catch (Exception ex)
@@ -201,6 +208,9 @@ namespace BeamServer.Controllers
                 var addresCoin = _config["BeamCoinContract"];
                 BigInteger ten = UnitConversion.Convert.ToWei(10);
 
+                _logger.LogInformation($"mint nft {minter} contract {addresBeamon} safeMint args {wallet} {id}");
+                _logger.LogInformation($"mint token {minter} contract {addresCoin} safeMint args {wallet} {ten}");
+
                 // get 1 pokemon and 10 token on each catch
                 var args = new Option<List<object>>(new List<object> { wallet, id });
                 var args2 = new Option<List<object>>(new List<object> { wallet, ten.ToString() });
@@ -216,6 +226,10 @@ namespace BeamServer.Controllers
                 if (!res.IsCreated)
                 {
                     _logger.LogError(res.RawContent);
+                }
+                else
+                {
+                    _logger.LogInformation($"minted {id}");
                 }
             }
             catch (Exception ex)
