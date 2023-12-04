@@ -196,7 +196,7 @@ namespace BeamServer.Controllers
 
                 var addresBeamon = _config["BeamonContract"];
                 var addresCoin = _config["BeamCoinContract"];
-                BigInteger ten = UnitConversion.Convert.ToWei(new BigInteger(10), UnitConversion.EthUnit.Ether);
+                BigInteger ten = UnitConversion.Convert.ToWei(10);
 
                 // get 1 pokemon and 10 token on each catch
                 var args = new Option<List<object>>(new List<object> { wallet, id });
