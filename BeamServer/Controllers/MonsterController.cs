@@ -139,6 +139,7 @@ namespace BeamServer.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
+                throw;
             }
 
 
@@ -210,6 +211,7 @@ namespace BeamServer.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
+                throw;
             }
 
 
