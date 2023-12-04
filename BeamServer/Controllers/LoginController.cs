@@ -81,6 +81,7 @@ namespace BeamServer.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
+                throw;
             }
 
             return new PlayerName() { Name = string.Empty };
@@ -89,11 +90,11 @@ namespace BeamServer.Controllers
         [HttpPost("Update")]
         public async Task<IActionResult> UpdateUsername([FromBody] PlayerName playerName)
         {
-
             var user = _dbContext.Users.FirstOrDefault(u => u.UserName == User.Identity.Name);
             user.UserName = playerName.Name;
             await _userManager.UpdateAsync(user);
             await _userManager.UpdateNormalizedUserNameAsync(user);
+            _profilesApi.CreateProfileAsync(new CreateProfileRequestInput(user.ProfileId));
             return Ok(playerName);
         }
     }
