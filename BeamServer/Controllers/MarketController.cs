@@ -76,6 +76,8 @@ namespace BeamServer.Controllers
                         {
                             MyAsset = x.SellerEntityId.Equals(profile, StringComparison.OrdinalIgnoreCase),
                             Price = x.Price,
+                            MarketplaceId = x.MarketplaceId,
+                            OrderId = x.OrderId,
                             Monster = monsters.Where(z => z.MonsterId.ToString() == x.Nft.AssetId).FirstOrDefault()
                         }).ToList();
                     }
@@ -92,6 +94,68 @@ namespace BeamServer.Controllers
 
         }
 
+        [HttpPost("Sell")]
+        public async Task<IActionResult> Sell([FromBody] MarketSellDto sellDto)
+        {
+            var listAssets = new List<MarketDto>();
+            try
+            {
+                var profile = GetProfile(User.Identity.Name);
+                var addresBeamon = _config["BeamonContract"];
+                GetAssetsBodyInput param = new GetAssetsBodyInput();
+                param.Limit = 100;
+                var asset = await _assetsApi.GetProfileAssetsForGamePostAsync(param, profile);
+
+                if (asset.TryOk(out GetAssetsResponse result))
+                {
+                    var assetId = result.Data.Where(x => x.AssetAddress.Equals(addresBeamon, StringComparison.OrdinalIgnoreCase) && x.AssetId == sellDto.TokenId).First();
+                    SellAssetRequestInput request = new SellAssetRequestInput(assetId.MarketplaceId, sellDto.Price, 1, SellAssetRequestInput.SellTypeEnum.FixedPrice);
+
+                    _marketplaceApi.ListAssetAsync(request, profile);
+
+                }
+                else
+                {
+                    throw new Exception("Asset not found");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+
+
+            return Ok();
+
+        }
+
+        [HttpPost("Buy")]
+        public async Task<IActionResult> Buy([FromBody] MarketBuyDto buyDto)
+        {
+            var listAssets = new List<MarketDto>();
+            try
+            {
+                var profile = GetProfile(User.Identity.Name);
+                var addresBeamon = _config["BeamonContract"];
+
+                BuyAssetRequestInput request = new BuyAssetRequestInput(1);
+
+                _marketplaceApi.BuyListedAssetAsync(request, profile, buyDto.OrderId);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+
+
+            return Ok();
+
+        }
+
+
     }
+
 
 }

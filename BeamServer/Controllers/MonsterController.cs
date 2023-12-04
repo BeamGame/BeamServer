@@ -232,6 +232,26 @@ namespace BeamServer.Controllers
             return true;
         }
 
+        [HttpGet("HaveStarter")]
+        public async Task<bool> HaveStarter()
+        {
+            var listMonsters = new List<Monster>();
+            try
+            {
+                var user = await _dbContext.Users.Where(x => x.UserName == User.Identity.Name).FirstAsync();
+                return user.RequestStarter;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+
+
+            return false;
+
+        }
+
 
         [HttpGet("GetMonsters")]
         public async Task<List<Monster>> GetMonsters()
