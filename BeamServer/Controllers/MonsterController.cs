@@ -14,6 +14,10 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Text.Json;
 using System.Globalization;
 using Nethereum.Util;
+using Nethereum.Web3;
+using Nethereum.Web3.Accounts;
+using Nethereum.RPC.Eth.DTOs;
+using BeamServer.Models.TokenOwner;
 
 namespace BeamServer.Controllers
 {
@@ -182,7 +186,7 @@ namespace BeamServer.Controllers
                 var user = await _dbContext.Users.Where(x => x.UserName == User.Identity.Name).FirstAsync();
                 user.RequestStarter = true;
 
-                var beamon = _dbContext.Beamons.Where(x => x.Name.Equals(monsterDto.Name, StringComparison.OrdinalIgnoreCase)).First();
+                var beamon = _dbContext.Beamons.Where(x => x.Name == monsterDto.Name).First();
                 var newMonster = new Monster() { BeamonId = beamon.BeamonId, Exp = 0, Level = monsterDto.Level };
                 _dbContext.Monsters.Add(newMonster);
 
@@ -196,15 +200,15 @@ namespace BeamServer.Controllers
 
                 // get 1 pokemon and 10 token on each catch
                 var args = new Option<List<object>>(new List<object> { wallet, id });
-                var args2 = new Option<List<object>>(new List<object> { wallet, ten });
+                var args2 = new Option<List<object>>(new List<object> { wallet, ten.ToString() });
                 List<CreateTransactionRequestInputInteractionsInner> interactions = new List<CreateTransactionRequestInputInteractionsInner>();
                 CreateTransactionRequestInputInteractionsInner interaction = new CreateTransactionRequestInputInteractionsInner(addresBeamon, "safeMint", args);
-                CreateTransactionRequestInputInteractionsInner interaction2 = new CreateTransactionRequestInputInteractionsInner(addresCoin, "safeMint", args2);
+                CreateTransactionRequestInputInteractionsInner interaction2 = new CreateTransactionRequestInputInteractionsInner(addresCoin, "mint", args2);
 
                 CreateTransactionRequestInput request = new CreateTransactionRequestInput(new List<CreateTransactionRequestInputInteractionsInner> { interaction, interaction2 });
 
                 // dont call it async to finish fast
-                _transactionsApi.CreateProfileTransactionAsync(request, minter);
+                var res = await _transactionsApi.CreateProfileTransactionAsync(request, minter);
 
 
             }
@@ -224,7 +228,7 @@ namespace BeamServer.Controllers
         public async Task<bool> UpdateMonster([FromBody] UpdateMonsterDto monsterDto)
         {
 
-            var getMonster = _dbContext.Monsters.Where(a => a.MonsterId == monsterDto.TokenId).FirstOrDefault();
+            var getMonster = _dbContext.Monsters.Where(a => a.MonsterId == monsterDto.MonsterId).FirstOrDefault();
 
             getMonster.Level = monsterDto.Level;
             getMonster.Exp = monsterDto.Exp;
@@ -263,17 +267,68 @@ namespace BeamServer.Controllers
             {
                 var profile = GetProfile(User.Identity.Name);
                 var addresBeamon = _config["BeamonContract"];
-                GetAssetsBodyInput param = new GetAssetsBodyInput();
-                param.Limit = 100;
-                var assets = await _assetsApi.GetProfileAssetsForGamePostAsync(param, profile);
-                if (assets.TryOk(out GetAssetsResponse result))
+                //GetAssetsBodyInput param = new GetAssetsBodyInput();
+                //param.Limit = 100;
+                //var assets = await _assetsApi.GetProfileAssetsForGamePostAsync(param, profile);
+                //if (assets.TryOk(out GetAssetsResponse result))
+                //{
+                //    var listIds = result.Data.Where(x => x.AssetAddress.Equals(addresBeamon, StringComparison.OrdinalIgnoreCase)).Select(x => int.Parse(x.AssetId));
+                //    if (listIds.Any())
+                //    {
+                //        listMonsters = _dbContext.Monsters.Include(x => x.Beamon).Where(x => listIds.Contains(x.MonsterId)).ToList();
+                //    }
+                //}
+
+                string wallet = string.Empty;
+                var profileBeam = await _profilesApi.CreateProfileAsync(new CreateProfileRequestInput(profile));
+                if (profileBeam.IsCreated)
                 {
-                    var listIds = result.Data.Where(x => x.AssetAddress.Equals(addresBeamon, StringComparison.OrdinalIgnoreCase)).Select(x => int.Parse(x.AssetId));
-                    if (listIds.Any())
+                    var prof = JsonSerializer.Deserialize<Profile>(profileBeam.RawContent);
+                    wallet = prof.wallets[0].address;
+                }
+                else
+                {
+                    var prof = await _profilesApi.GetProfileAsync(profile);
+                    if (prof.IsOk)
                     {
-                        listMonsters = _dbContext.Monsters.Include(x => x.Beamon).Where(x => listIds.Contains(x.MonsterId)).ToList();
+                        var prof2 = JsonSerializer.Deserialize<Profile>(prof.RawContent);
+                        wallet = prof2.wallets[0].address;
+                    }
+                    else
+                    {
+                        throw new Exception("Profile not found");
                     }
                 }
+
+                var url = _config["RpcUrl"];
+                var privateKey = "0x7580e7fb49df1c861f0050fae31c2224c6aba908e116b8da44ee8cd927b990b0";
+                var account = new Account(privateKey);
+                var web3 = new Web3(account, url);
+
+                var monsters = _dbContext.Monsters.Include(x => x.Beamon).ToList();
+                var ids = monsters.Select(x => new BigInteger(x.MonsterId)).ToList();
+
+                var getOwner = new GetOwnersFunction()
+                {
+                    Ids = ids,
+                    Contract = addresBeamon
+                };
+
+                var balanceHandler = web3.Eth.GetContractQueryHandler<GetOwnersFunction>();
+                var result = await balanceHandler.QueryAsync<GetOwnersOutputDTO>(_config["TokenOwnerContract"], getOwner);
+
+                var datas = result.Owners.Select((x, i) => new Tuple<Monster, string>(monsters[i], x)).Where(x => x.Item2.Equals(wallet, StringComparison.OrdinalIgnoreCase)).ToList();
+
+                listMonsters = datas.Select(x => x.Item1).ToList();
+                if (listMonsters.Any())
+                {
+                    listMonsters.ForEach(x =>
+                    {
+                        x.BeamonMoves = null;
+                        x.Beamon.Monsters = null;
+                    });
+                }
+
             }
             catch (Exception ex)
             {
